@@ -1,66 +1,184 @@
-# main.py
+import os
+import threading
+import queue
+import time
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
-from modules.signer import generate_keys, sign_bitstream
-from modules.pr_manager import program_partial
-from modules.monitor import detect_anomaly
-import random
 
-class CyberFPGAApp:
+from core.rsa_engine import generate_keys, explain_keygen
+from core.signer import sign_file, verify_signature
+from core.fpga_simulator import FPGASimulator
+from core.pr_manager import PRManager
+from core.explain_module import explain_signing, explain_verification
+from core.monitor import TelemetryMonitor
+
+# Ensure data folder exists
+os.makedirs("data", exist_ok=True)
+
+# Simple thread-safe logger for GUI
+log_queue = queue.Queue()
+
+def gui_log(msg):
+    log_queue.put(msg)
+
+class App:
     def __init__(self, root):
         self.root = root
-        self.root.title("Cyber Secure FPGA System")
-        self.root.geometry("700x500")
-        self.root.configure(bg="#0e1111")
+        root.title("Cyber Secure FPGA Prototype (Advanced)")
+        root.geometry("900x600")
+        root.configure(bg="#0f1111")
 
-        tk.Label(root, text="🛡️ Cyber Secure FPGA Prototype",
-                 bg="#0e1111", fg="white", font=("Arial", 18, "bold")).pack(pady=10)
+        # Header
+        header = tk.Label(root, text="🛡️ Cyber Secure FPGA Prototype", font=("Helvetica", 20, "bold"), fg="white", bg="#0f1111")
+        header.pack(pady=10)
 
-        self.log_box = scrolledtext.ScrolledText(root, width=80, height=20, bg="#1c1f1f", fg="lime", font=("Consolas", 10))
-        self.log_box.pack(padx=10, pady=10)
+        # Console area
+        self.console = scrolledtext.ScrolledText(root, width=100, height=20, bg="#1c1c1c", fg="#8efc8e", font=("Consolas", 10))
+        self.console.pack(padx=10, pady=10)
 
-        frame = tk.Frame(root, bg="#0e1111")
-        frame.pack(pady=10)
+        # Buttons frame
+        btn_frame = tk.Frame(root, bg="#0f1111")
+        btn_frame.pack(pady=8)
 
-        tk.Button(frame, text="🔑 Generate RSA Keys", command=self.generate_keys, width=22, bg="#2b6cb0", fg="white").grid(row=0, column=0, padx=5)
-        tk.Button(frame, text="✍️ Sign Bitstream", command=self.sign_bitstream, width=22, bg="#2b6cb0", fg="white").grid(row=0, column=1, padx=5)
-        tk.Button(frame, text="⚙️ Reconfigure FPGA", command=self.reconfigure_fpga, width=22, bg="#2b6cb0", fg="white").grid(row=0, column=2, padx=5)
-        tk.Button(frame, text="📊 Monitor System", command=self.monitor_system, width=22, bg="#2b6cb0", fg="white").grid(row=0, column=3, padx=5)
+        btn_gen = tk.Button(btn_frame, text="Generate RSA Keys", width=20, command=self.handle_generate_keys, bg="#2b6cb0", fg="white")
+        btn_gen.grid(row=0, column=0, padx=6, pady=4)
 
-    def log(self, msg):
-        self.log_box.insert(tk.END, msg + "\n")
-        self.log_box.see(tk.END)
+        btn_sign = tk.Button(btn_frame, text="Sign Bitstream", width=20, command=self.handle_sign_bitstream, bg="#2b6cb0", fg="white")
+        btn_sign.grid(row=0, column=1, padx=6, pady=4)
 
-    def generate_keys(self):
-        priv, pub = generate_keys()
-        self.log(f"[INFO] RSA Keys generated:\nPrivate: {priv}\nPublic: {pub}")
+        btn_verify_program = tk.Button(btn_frame, text="Verify & Program", width=20, command=self.handle_verify_and_program, bg="#2b6cb0", fg="white")
+        btn_verify_program.grid(row=0, column=2, padx=6, pady=4)
 
-    def sign_bitstream(self):
-        path = filedialog.askopenfilename(title="Select Bitstream (.bit)", filetypes=[("Bitstream Files", "*.bit")])
+        btn_monitor = tk.Button(btn_frame, text="Start Monitoring", width=20, command=self.handle_start_monitoring, bg="#2b6cb0", fg="white")
+        btn_monitor.grid(row=0, column=3, padx=6, pady=4)
+
+        btn_stop = tk.Button(btn_frame, text="Stop Monitoring", width=20, command=self.handle_stop_monitoring, bg="#d9534f", fg="white")
+        btn_stop.grid(row=0, column=4, padx=6, pady=4)
+
+        # internal
+        self.fpga = FPGASimulator()
+        self.pr = PRManager(self.fpga, public_key_path="data/public.pem", safe_image="data/safe_module.bit", log_callback=gui_log)
+        self.monitor = TelemetryMonitor()
+        self.monitor_thread = None
+        self.monitor_running = False
+
+        # start GUI log polling
+        self.root.after(100, self._poll_log_queue)
+
+    def _poll_log_queue(self):
+        try:
+            while True:
+                msg = log_queue.get_nowait()
+                self.console.insert(tk.END, msg + "\n")
+                self.console.see(tk.END)
+        except queue.Empty:
+            pass
+        self.root.after(100, self._poll_log_queue)
+
+    def handle_generate_keys(self):
+        try:
+            priv, pub = generate_keys("data/private.pem", "data/public.pem", bits=3072)
+            gui_log("[INFO] RSA Keys generated.")
+            expl = explain_keygen(priv, pub)
+            gui_log(expl)
+            messagebox.showinfo("Keys Generated", f"Private: {priv}\nPublic: {pub}")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+            gui_log(f"[ERROR] Key generation failed: {e}")
+
+    def handle_sign_bitstream(self):
+        path = filedialog.askopenfilename(title="Select bitstream (.bit or any binary file)", filetypes=[("Bitstream", "*.*")])
         if not path:
             return
         try:
-            sig_path = sign_bitstream(path, "data/private.pem")
-            self.log(f"[OK] Bitstream signed successfully:\nSignature: {sig_path}")
+            sig = sign_file(path, private_key_path="data/private.pem")
+            gui_log(f"[OK] Signed: {path} -> {sig}")
+            expl = explain_signing(path, sig)
+            gui_log(expl)
+            messagebox.showinfo("Signed", f"Signature created: {sig}")
         except Exception as e:
-            self.log(f"[ERROR] {str(e)}")
+            gui_log(f"[ERROR] Signing failed: {e}")
+            messagebox.showerror("Signing Error", str(e))
 
-    def reconfigure_fpga(self):
-        path = filedialog.askopenfilename(title="Select Bitstream to Load", filetypes=[("Bitstream Files", "*.bit")])
+    def handle_verify_and_program(self):
+        path = filedialog.askopenfilename(title="Select bitstream to verify & program", filetypes=[("Bitstream", "*.*")])
         if not path:
             return
-        program_partial(path, self.log)
-
-    def monitor_system(self):
-        data = [random.randint(0, 10) for _ in range(10)]
-        data.append(random.randint(0, 50))  # simulate anomaly
-        if detect_anomaly(data):
-            self.log("[ALERT] Anomaly detected! Triggering safe reconfiguration...")
-            program_partial("data/safe_module.bit", self.log)
+        sig_path = path + ".sig"
+        if not os.path.exists(sig_path):
+            messagebox.showwarning("Signature missing", f"No signature file found for {path}\nExpected: {sig_path}")
+            return
+        ok, msg = verify_signature("data/public.pem", path, sig_path)
+        gui_log(f"[Verify] {msg}")
+        gui_log(explain_verification(path, sig_path))
+        if not ok:
+            messagebox.showerror("Verification Failed", msg)
+            return
+        # program and validate via PRManager
+        success = self.pr.install_and_validate(path, sig_path, do_self_test=True)
+        if success:
+            messagebox.showinfo("Success", "Bitstream verified and programmed successfully.")
         else:
-            self.log("[OK] System running normally.")
+            messagebox.showwarning("Install Failed", "Programming / self-test failed; check logs.")
+
+    def handle_start_monitoring(self):
+        if self.monitor_running:
+            messagebox.showinfo("Monitoring", "Monitoring already running.")
+            return
+        # prepare baseline by collecting telemetry from safe image
+        # ensure safe image exists; if not, create simple safe file
+        safe_path = "data/safe_module.bit"
+        if not os.path.exists(safe_path):
+            with open(safe_path, "wb") as f:
+                f.write(b"SAFE_MODULE_V1" * 200)
+            gui_log(f"[Setup] Created demo safe image at {safe_path}")
+        # program safe image first
+        self.fpga.program_partial(safe_path, log_callback=gui_log)
+        # collect baseline samples
+        samples = []
+        for _ in range(120):
+            samples.append(self.fpga.get_telemetry())
+            time.sleep(0.01)
+        res = self.monitor.train_baseline(samples)
+        gui_log(f"[Monitor] {res}")
+        self.monitor_running = True
+        self.monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
+        self.monitor_thread.start()
+        messagebox.showinfo("Monitoring", "Monitoring started; check console for alerts.")
+
+    def handle_stop_monitoring(self):
+        if not self.monitor_running:
+            messagebox.showinfo("Monitoring", "Monitoring is not running.")
+            return
+        self.monitor_running = False
+        messagebox.showinfo("Monitoring", "Monitoring stopped.")
+
+    def _monitor_loop(self):
+        gui_log("[Monitor] Entering monitoring loop...")
+        inject_at = time.time() + 8  # will inject anomaly at 8s for demo
+        injected = False
+        while self.monitor_running:
+            t = self.fpga.get_telemetry()
+            is_anom = self.monitor.is_anomaly(t)
+            gui_log(f"[Monitor] Telemetry: {t} Anomaly: {is_anom}")
+            if is_anom:
+                gui_log("[Monitor] Anomaly detected -> Triggering rollback to safe image.")
+                self.pr.rollback()
+                # stop monitoring after recovery for demo
+                self.monitor_running = False
+                break
+            # demo: inject bad module after some time
+            if not injected and time.time() > inject_at:
+                bad_path = "data/bad_module.bit"
+                with open(bad_path, "wb") as f:
+                    f.write(b"BAD_MODULE_V1" * 200)
+                gui_log("[Demo] Injecting bad module to simulate attack/fault.")
+                self.fpga.program_partial(bad_path, log_callback=gui_log)
+                injected = True
+            time.sleep(1.0)
+        gui_log("[Monitor] Monitoring loop exited.")
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = CyberFPGAApp(root)
+    app = App(root)
     root.mainloop()
