@@ -1,3 +1,6 @@
+<img width="1359" height="717" alt="image" src="https://github.com/user-attachments/assets/417a29f4-ddd5-4cba-acef-2db6e28d2155" />
+
+
 ## 🛡️ Cyber Secure FPGA Prototype
 
 A **Python-based GUI simulation** of a **Cyber Secure and Resilient System-on-Chip (SoC)** using **FPGA dynamic configuration principles**.
@@ -47,14 +50,7 @@ It serves as an **academic or industrial prototype** for showcasing secure hardw
 
 ---
 
-### 🖥️ GUI Preview
 
-Your GUI looks like this 👇
-*(from your provided image)*
-
-![Cyber Secure FPGA GUI](https://github.com/yourusername/cyber-secure-fpga/blob/main/assets/gui_screenshot.png)
-
----
 
 ### 🧰 Requirements
 
