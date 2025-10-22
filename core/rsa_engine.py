@@ -1,7 +1,3 @@
-"""
-rsa_engine.py
-Generate RSA keypair and explain the meaning/usages of keys.
-"""
 import os
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization

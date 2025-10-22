@@ -1,8 +1,4 @@
-"""
-monitor.py
-Telemetry monitor with simple model.
-Tries to use IsolationForest (sklearn) if available, otherwise falls back to z-score checks.
-"""
+
 import time
 import numpy as np
 

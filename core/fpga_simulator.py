@@ -1,7 +1,4 @@
-"""
-fpga_simulator.py
-Simulate FPGA partial reconfiguration, CRC/readback, and telemetry.
-"""
+
 import os
 import time
 import zlib
