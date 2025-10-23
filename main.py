@@ -12,6 +12,53 @@ from core.pr_manager import PRManager
 from core.explain_module import explain_signing, explain_verification
 from core.monitor import TelemetryMonitor
 
+from core.chatbot import chatbot_reply
+
+def open_chatbot():
+    chat_window = tk.Toplevel(root)
+    chat_window.title("FPGA Security Chatbot")
+    chat_window.geometry("450x400")
+    chat_window.configure(bg="#222")
+
+    tk.Label(chat_window, text="Cyber Secure Chatbot Assistant", font=("Arial", 14, "bold"), fg="cyan", bg="#222").pack(pady=10)
+    chat_box = tk.Text(chat_window, height=15, width=55, bg="#111", fg="white", wrap="word")
+    chat_box.pack(padx=10, pady=10)
+    chat_box.insert(tk.END, "🤖 Chatbot: Hello! Ask me about RSA, signing, verification, or FPGA security.\n\n")
+
+    entry = tk.Entry(chat_window, width=45, bg="#333", fg="white")
+    entry.pack(side=tk.LEFT, padx=10, pady=5)
+
+    def send_message():
+        user_msg = entry.get().strip()
+        if not user_msg:
+            return
+        chat_box.insert(tk.END, f"🧑 You: {user_msg}\n")
+        reply = chatbot_reply(user_msg)
+        chat_box.insert(tk.END, f"🤖 Chatbot: {reply}\n\n")
+        chat_box.see(tk.END)
+        entry.delete(0, tk.END)
+
+    send_btn = tk.Button(chat_window, text="Send", command=send_message, bg="cyan", fg="black")
+    send_btn.pack(side=tk.RIGHT, padx=10, pady=5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Ensure data folder exists
 os.makedirs("data", exist_ok=True)
 
@@ -54,6 +101,7 @@ class App:
 
         btn_stop = tk.Button(btn_frame, text="Stop Monitoring", width=20, command=self.handle_stop_monitoring, bg="#d9534f", fg="white")
         btn_stop.grid(row=0, column=4, padx=6, pady=4)
+        tk.Button(root, text="🧠 Open Chatbot", command=open_chatbot, bg="#00bcd4", fg="black", width=25).pack(pady=10)
 
         # internal
         self.fpga = FPGASimulator()
