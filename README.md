@@ -111,6 +111,18 @@ Cyber-Secure-and-Resilient-System-on-Chip-using-FPGA-Dynamic-Configuration/
 | 4️⃣  | **Monitor System**    | Displays detailed logs with AI-style reasoning and confirmation.                                              |
 
 ---
+Architecture Update
++--------------------------------------------------------------+
+|          Cyber Secure FPGA System (with Chatbot)             |
++--------------------------------------------------------------+
+|  RSA Key Engine  |  Bitstream Signer  |  FPGA Simulator       |
+|  Monitor & Logger |  Explainable Layer |  🤖 Chatbot Assistant  |
++--------------------------------------------------------------+
+|         Tkinter GUI + Chat Console + Interactive Prompts     |
++--------------------------------------------------------------+
+
+
+
 
 ## 🧬 How It Works
 
