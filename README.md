@@ -1,7 +1,7 @@
 <img width="1360" height="479" alt="image" src="https://github.com/user-attachments/assets/cf213287-39fb-425c-88b5-28cff8e768f9" />
 <img width="802" height="434" alt="image" src="https://github.com/user-attachments/assets/891d5b8a-9a3b-4666-b7b7-5ec352f5ef7f" />
 
- 🛡️ Cyber Secure & Resilient FPGA System (Advanced Python Prototype)
+ 🛡️ Cyber Secure & Resilient FPGA System (Advanced Python Prototype).
 
 A next-generation **cybersecurity and educational prototype** built in **Python** that simulates a **Cyber Secure and Resilient System-on-Chip (SoC)** using **FPGA dynamic configuration principles**.  
 
@@ -40,9 +40,9 @@ Every action in the GUI produces:
 ## 🖥️ GUI Preview
 
 A minimal, dark-themed, Tkinter-based GUI that displays:
-- Live cryptographic operations  
-- Educational commentary  
-- System logs with real-time feedback
+- Live cryptographic operations . 
+- Educational commentary  .
+- System logs with real-time feedback.
 
 Example view:
 
