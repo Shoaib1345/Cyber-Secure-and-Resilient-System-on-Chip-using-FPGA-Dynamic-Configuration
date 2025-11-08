@@ -179,12 +179,12 @@ This project is licensed under the **MIT License** — free for research and edu
 
 ---
 
-## 📘 Repository Information
+## 📘 Repository Information.
 
 **Repository Name:** `cyber-secure-fpga-advanced`
 **Description:**
 
 > Advanced explainable prototype for a Cyber Secure & Resilient System-on-Chip using Python — integrates cryptographic key management, bitstream integrity verification, and secure FPGA reconfiguration through a Tkinter GUI.
 
----(including how to demonstrate the prototype for evaluation)?
+---(including how to demonstrate the prototype for evaluation)?  ..
 ```
